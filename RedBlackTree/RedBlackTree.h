@@ -1,6 +1,9 @@
 #ifndef __REDBLACKTREE__H__
 #define __REDBLACKTREE__H__
 
+#define LEFT			    1
+#define RIGHT		    	2
+
 enum NODE_COLOR
 {
 	BLACK = 0,
@@ -41,10 +44,11 @@ public :
 	//------------------------------------------------------
 	bool		ReleaseTree(void);
 
+	void		PrintNode(HDC hdc, RECT rWinSize);
 	//------------------------------------------------------
 	// 전위순회 방식 출력
 	//------------------------------------------------------
-	void		PreorderPrint(stNODE *pNode = NULL, int iDepth = 0, int iLR = 0);
+	void		PreorderPrint(HDC hdc, RECT rWinSize, stNODE *pNode = NULL, int iDepth = 0, int iLR = 0);
 
 	//------------------------------------------------------
 	// 중위순회 방식 출력

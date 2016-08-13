@@ -32,7 +32,7 @@ bool CRedBlackTree::InsertNode(int iData)
 		return true;
 	}
 
-	return linkNode(m_pRoot, pNode);
+	linkNode(m_pRoot, pNode);
 
 	if (pNode->pParent->Color == RED)
 		BalanceTree(pNode);
@@ -126,6 +126,8 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 	
 	if (pParent == pGrandFa->pLeft)
 	{
+		pUncle = pGrandFa->pRight;
+
 		if (pNode->Color == RED && pParent->Color == RED && pUncle->Color == RED)
 		{
 			pParent->Color = BLACK;
@@ -155,6 +157,8 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 
 	else if (pParent == pGrandFa->pRight)
 	{
+		pUncle = pGrandFa->pLeft;
+
 		if (pNode->Color == RED && pParent->Color == RED && pUncle->Color == RED)
 		{
 			pParent->Color = BLACK;
@@ -337,29 +341,44 @@ void CRedBlackTree::releaseNode(stNODE *pNode)
 	pNode = NULL;
 }
 
-/*
+void CRedBlackTree::PrintNode(HDC hdc, RECT rWinSize)
+{
+	PreorderPrint(hdc, rWinSize);
+}
+
 //------------------------------------------------------
 // 전위순회 방식 출력
 //------------------------------------------------------
-void CRedBlackTree::PreorderPrint(stNODE *pNode, int iDepth, int iLR)
+void CRedBlackTree::PreorderPrint(HDC hdc, RECT rWinSize, stNODE *pNode, int iDepth, int iLR)
 {
 	if (iDepth == 0)	pNode = m_pRoot;
-	if (pNode == NULL)	return;
+	if (pNode == &Nil)	return;
 
-	for (int iCnt = 0; iCnt < iDepth; iCnt++)
-		printf(" ");
+	HFONT hFont, hFontOld;
+	int iTextLocation;
 
-	if (iLR == 0)			printf("[ROOT] ");
-	if (iLR == LEFT)		printf("[LEFT %d] ", iDepth);
-	if (iLR == RIGHT)		printf("[RIGHT %d] ", iDepth);
+	hFont = CreateFont(15, 0, 0, 0, 800, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, NULL);
+	hFontOld = (HFONT)SelectObject(hdc, hFont);
+	if (pNode->Color == BLACK)			SetTextColor(hdc, RGB(0, 0, 0));
+	else if (pNode->Color == RED)		SetTextColor(hdc, RGB(255, 0, 0));
 
-	printf("%d", pNode->iData);
-	printf("\n");
+	SetTextAlign(hdc, TA_CENTER);
+	SetBkMode(hdc, TRANSPARENT);
 
-	PreorderPrint(pNode->pLeft, iDepth + 1, LEFT);
-	PreorderPrint(pNode->pRight, iDepth + 1, RIGHT);
+	if (pNode == m_pRoot)			iTextLocation = rWinSize.right / 2;
+	else if (iLR == LEFT)			iTextLocation = rWinSize.left - rWinSize.right / pow(2.0, (iDepth+1));
+	else if (iLR == RIGHT)			iTextLocation = rWinSize.left + rWinSize.right / pow(2.0, (iDepth+1));
+
+	TextOut(hdc, iTextLocation, iDepth * 50, L"Node", 4);
+
+	rWinSize.left = iTextLocation;
+	PreorderPrint(hdc, rWinSize, pNode->pLeft, iDepth + 1, LEFT);
+	PreorderPrint(hdc, rWinSize, pNode->pRight, iDepth + 1, RIGHT);
+
+	SelectObject(hdc, hFontOld);
 }
 
+/*
 //------------------------------------------------------
 // 중위순회 방식 출력
 //------------------------------------------------------
