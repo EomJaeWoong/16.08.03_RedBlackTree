@@ -109,7 +109,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PatBlt(g_hMemDC, 0, 0, rWinSize.right, rWinSize.bottom, WHITENESS);
 
 		g_Tree.PrintNode(g_hMemDC, rWinSize);
-
+		g_Tree.PrintCount(g_hMemDC);
 		hdc = BeginPaint(hWnd, &ps);
 	
 		//-------------------------------------------------------------------------------------------------------

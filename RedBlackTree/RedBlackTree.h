@@ -60,6 +60,7 @@ public :
 	//------------------------------------------------------
 	void		PostorderPrint(stNODE *pNode = NULL, int iDepth = 0, int iLR = 0);
 
+	void		PrintCount(HDC hdc);
 protected :
 	//------------------------------------------------------
 	// 노드 생성

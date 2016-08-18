@@ -29,10 +29,12 @@ bool CRedBlackTree::InsertNode(int iData)
 	{
 		pNode->Color = BLACK;
 		m_pRoot = pNode;
+		m_iNodeCount++;
 		return true;
 	}
 
 	linkNode(m_pRoot, pNode);
+	m_iNodeCount++;
 
 	if (pNode->pParent->Color == RED)
 		BalanceTree(pNode);
@@ -135,7 +137,8 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 
 			pGrandFa->Color = RED;
 
-			BalanceTree(pGrandFa);
+			if (pGrandFa == m_pRoot)	pGrandFa->Color = BLACK;
+			else						BalanceTree(pGrandFa);
 		}
 
 		else if (pUncle->Color == BLACK && pNode->Color == RED && pParent->Color == RED)
@@ -151,6 +154,7 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 			else if (pNode == pParent->pRight)
 			{
 				LeftRotation(pParent);
+				BalanceTree(pNode->pLeft);
 			}
 		}
 	}
@@ -166,14 +170,16 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 
 			pGrandFa->Color = RED;
 
-			BalanceTree(pGrandFa);
+			if (pGrandFa == m_pRoot)	pGrandFa->Color = BLACK;
+			else						BalanceTree(pGrandFa);
 		}
 
 		else if (pUncle->Color == BLACK && pNode->Color == RED && pParent->Color == RED)
 		{
 			if (pNode == pParent->pLeft)
 			{
-				RightRotation(pGrandFa);
+				RightRotation(pParent);
+				BalanceTree(pNode->pRight);
 			}
 
 			else if (pNode == pParent->pRight)
@@ -181,7 +187,7 @@ void CRedBlackTree::BalanceTree(stNODE *pNode)
 				pParent->Color = BLACK;
 				pGrandFa->Color = RED;
 
-				LeftRotation(pParent);
+				LeftRotation(pGrandFa);
 			}
 		}
 	}
@@ -265,15 +271,26 @@ void CRedBlackTree::LeftRotation(stNODE *pNode)
 {
 	stNODE *pRightChild = pNode->pRight;
 
-	if (pNode->pParent->pLeft == pNode)			pNode->pParent->pLeft = pRightChild;
-	else if (pNode->pParent->pLeft == pNode)	pNode->pParent->pRight = pRightChild;
+	if (pNode == m_pRoot)						m_pRoot = pRightChild;
+	else if (pNode->pParent->pLeft == pNode)	pNode->pParent->pLeft = pRightChild;
+	else if (pNode->pParent->pRight == pNode)	pNode->pParent->pRight = pRightChild;
 	pRightChild->pParent = pNode->pParent;
 
-	pNode->pRight = pRightChild->pLeft;
-	pRightChild->pLeft->pParent = pNode;
+	if (pNode->pLeft == &Nil)
+	{
+		pRightChild->pLeft = pNode;
+		pNode->pParent = pRightChild;
+		pNode->pRight = &Nil;
+	}
 
-	pRightChild->pLeft = pNode;
-	pNode->pParent = pRightChild;
+	else
+	{
+		pNode->pRight = pRightChild->pLeft;
+		pRightChild->pLeft->pParent = pNode;
+
+		pRightChild->pLeft = pNode;
+		pNode->pParent = pRightChild;
+	}
 }
 
 //------------------------------------------------------
@@ -306,15 +323,28 @@ void CRedBlackTree::RightRotation(stNODE *pNode)
 {
 	stNODE *pLeftChild = pNode->pLeft;
 
-	if (pNode->pParent->pLeft == pNode)			pNode->pParent->pLeft  = pLeftChild;
-	else if (pNode->pParent->pLeft == pNode)	pNode->pParent->pRight = pLeftChild;
+	if(pNode == m_pRoot)							m_pRoot = pLeftChild;
+	else if (pNode->pParent->pLeft == pNode)		pNode->pParent->pLeft  = pLeftChild;
+	else if (pNode->pParent->pRight == pNode)		pNode->pParent->pRight = pLeftChild;
 	pLeftChild->pParent = pNode->pParent;
 
-	pNode->pLeft = pLeftChild->pRight;
-	pLeftChild->pRight->pParent = pNode;
+	if (pNode->pLeft == &Nil)
+	{
+		pLeftChild->pLeft = pNode;
+		pNode->pParent = pLeftChild;
+		pNode->pRight = &Nil;
+	}
 
-	pLeftChild->pRight = pNode;
-	pNode->pParent = pLeftChild;
+	else
+	{
+		pNode->pLeft = pLeftChild->pRight;
+		pLeftChild->pRight->pParent = pNode;
+
+		pLeftChild->pRight = pNode;
+		pNode->pParent = pLeftChild;
+	}
+
+	Nil.pParent = NULL;
 }
 
 //------------------------------------------------------
@@ -355,6 +385,7 @@ void CRedBlackTree::PreorderPrint(HDC hdc, RECT rWinSize, stNODE *pNode, int iDe
 	if (pNode == &Nil)	return;
 
 	HFONT hFont, hFontOld;
+	TCHAR tData[5];
 	int iTextLocation;
 
 	hFont = CreateFont(15, 0, 0, 0, 800, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, NULL);
@@ -365,17 +396,32 @@ void CRedBlackTree::PreorderPrint(HDC hdc, RECT rWinSize, stNODE *pNode, int iDe
 	SetTextAlign(hdc, TA_CENTER);
 	SetBkMode(hdc, TRANSPARENT);
 
-	if (pNode == m_pRoot)			iTextLocation = rWinSize.right / 2;
-	else if (iLR == LEFT)			iTextLocation = rWinSize.left - rWinSize.right / pow(2.0, (iDepth+1));
-	else if (iLR == RIGHT)			iTextLocation = rWinSize.left + rWinSize.right / pow(2.0, (iDepth+1));
+	MoveToEx(hdc, rWinSize.left, (iDepth - 1) * 80 + 20, NULL);
 
-	TextOut(hdc, iTextLocation, iDepth * 50, L"Node", 4);
+	if (pNode == m_pRoot)			iTextLocation = rWinSize.right / 2;
+	else if (iLR == LEFT)	iTextLocation = rWinSize.left - rWinSize.right / pow(2.0, (iDepth + 1));
+	else if (iLR == RIGHT)	iTextLocation = rWinSize.left + rWinSize.right / pow(2.0, (iDepth + 1));
+	LineTo(hdc, iTextLocation, iDepth * 80 - 10);
+
+	wsprintf(tData, TEXT("%d"), pNode->iData);
+	TextOut(hdc, iTextLocation, iDepth * 80, tData, wcslen(tData));
 
 	rWinSize.left = iTextLocation;
 	PreorderPrint(hdc, rWinSize, pNode->pLeft, iDepth + 1, LEFT);
 	PreorderPrint(hdc, rWinSize, pNode->pRight, iDepth + 1, RIGHT);
 
 	SelectObject(hdc, hFontOld);
+}
+
+void CRedBlackTree::PrintCount(HDC hdc)
+{
+	TCHAR tCount[20];
+
+	SetTextAlign(hdc, TA_LEFT);
+	SetTextColor(hdc, RGB(0, 0, 0));
+
+	wsprintf(tCount, TEXT("NodeCount : %d"), m_iNodeCount);
+	TextOut(hdc, 0, 0, tCount, wcslen(tCount));
 }
 
 /*
